@@ -5,12 +5,10 @@
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/items.html
 
-from scrapy import Item
-from scrapy import Field
+from scrapy import Item, Field
 
 # 用户个人信息
 class ZhihuItem(Item):
-    # define the fields for your item here like:
     # 用户id
     user_id = Field()
     # 头像链接
@@ -43,3 +41,55 @@ class RelationItem(Item):
 
 # 回答
 class AnswerItem(Item):
+    # 回答的用户
+    answer_user_id = Field()
+    # 回答内容的id
+    answer_id = Field()
+    # 问题的id
+    question_id = Field()
+    # 创建的时间
+    created_time = Field()
+    # 更新的时间
+    updated_time = Field()
+    # 赞成数量
+    voteup_count = Field()
+    # 评论数量
+    comment_count = Field()
+    # 回答内容
+    content = Field()
+
+# 问题
+class QuestionItem(Item):
+    # 提问人的id
+    ask_user_id = Field()
+    # 问题的id
+    question_id = Field()
+    # 提问时间
+    ask_time = Field()
+    # 回答数量
+    answer_count = Field()
+    # 关注数量
+    followees_count = Field()
+    # 提问标题
+    title = Field()
+
+# 文章
+class ArticleItem(Item):
+    # 作者id
+    author_id = Field()
+    # 文章标题
+    title = Field()
+    # 文章id
+    article_id = Field()
+    # 内容
+    content = Field()
+    # 创建时间
+    created_time = Field()
+    # 更新时间
+    updated_time = Field()
+    # 赞成数量
+    voteup_count = Field()
+    # 评论数量
+    comment_count = Field()
+
+
