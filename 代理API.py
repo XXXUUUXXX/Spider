@@ -4,14 +4,12 @@ import requests
 
 def get_proxy():
     return requests.get("http://127.0.0.1:5010/get/").content
+#print get_proxy()
 
 def delete_proxy(proxy):
     requests.get("http://127.0.0.1:5010/delete/?proxy={}".format(proxy))
 
-# your spider code
-
 def getHtml():
-    # ....
     retry_count = 5
     proxy = get_proxy()
     while retry_count > 0:
