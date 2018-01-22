@@ -3,33 +3,43 @@ import scrapy
 
 import re
 import json
-import pdb
-from scrapy.http import Request
+#import pdb
+#from scrapy.http import Request
 from zhihu.items import ZhihuItem, RelationItem, AnswerItem, QuestionItem, ArticleItem
 from scrapy_redis.spiders import RedisSpider
 
 
-class ZhihuspiderSpider(scrapy.Spider):
+class ZhihuspiderSpider(RedisSpider):
     name = 'zhihuspider'
+    redis_key = 'zhihuspider:start_urls'
+
     allowed_domains = ['www.zhihu.com']
     start_urls = ['http://www.zhihu.com/']
 
-    #start_user_id = ['un-he-shu-ju-8']
+    #start_user_id = ['peng-dong-cheng-38']
 
 
     def start_requests(self):
         for one in self.start_user_id:
-            yield Request('https://www.zhihu.com/api/v4/members/' + one +'?include=locations,employments,industry_category,gender,educations,business,follower_count,following_count,description,badge[?(type=best_answerer)].topics',meta={'user_id':one},callback=self.parse)
+            # meta参数的作用是传递信息给下一个函数，meta只接受字典类型的赋值
+            # meta = {'key1': value1, 'key2': value2}
+            # 在下一个函数中取出value1，只需得到上一个函数的meta['key1']即可
+            # 因为meta是随着Request产生是传递的，下一个函数得到的Response对象中就会有meta
+            # 即response.meta  取value1则是value1 = response.meta['key1']
+            yield scrapy.Request('https://www.zhihu.com/api/v4/members/' + one +'?include=locations,employments,industry_category,gender,educations,business,follower_count,following_count,description,badge[?(type=best_answerer)].topics',meta={'user_id':one},callback=self.parse)
 
     def parse(self, response):
+        # 将response(json)转换成字符串型，并替换其中的false和true
         json_result = str(response.body,encoding='utf8').replace('false', '0').replace('true', '1')
-        # eval将字符串str当成有效的表达式来求值并返回计算结果
+        # eval函数用来做数据类型的转换,eval将字符串型的list,tuple,dict转变成原有的类型(数据还原成它本身)
         dict_result = eval(json_result)
 
         item = ZhihuItem()
         # 用户id
         item['user_id'] = dict_result['url_token']
-        # 用户头像链接
+        # 用户头像链接，
+        # 对原头像链接切片https://pic3.zhimg.com/v2-3dcd43d154a55b32c1b3ccb8103e6777_is.jpg
+        # is.jpg显示小图，x1.jpg显示大图https://pic3.zhimg.com/v2-3dcd43d154a55b32c1b3ccb8103e6777_x1.jpg
         item['user_image_url'] = dict_result['avatar_url'][:-6] + 'x1.jpg'
         # 用户名
         item['name'] = dict_result['name']
