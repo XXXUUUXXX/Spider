@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Define here the models for your scraped items
-#
-# See documentation in:
-# https://doc.scrapy.org/en/latest/topics/items.html
+
 
 from scrapy import Item, Field
 
@@ -58,7 +55,7 @@ class AnswerItem(Item):
     # 回答内容
     content = Field()
 
-# 问题
+# 提问
 class QuestionItem(Item):
     # 提问人的id
     ask_user_id = Field()

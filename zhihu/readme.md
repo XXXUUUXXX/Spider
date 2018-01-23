@@ -25,7 +25,18 @@ python3 -m pip install scrapy
 
 通过fiddler抓包的body为3000左右
 %2C是用URL编码形式表示的ASCII字符'逗号,'
+简化URL用URL解码工具http://tool.chinaz.com/tools/urlencode.aspx
 
-https://www.zhihu.com/api/v4/members/peng-dong-cheng-38?include=locations%2Cemployments%2Cgender%2Ceducations%2Cbusiness%2Cvoteup_count%2Cthanked_Count%2Cfollower_count%2Cfollowing_count%2Ccover_url%2Cfollowing_topic_count%2Cfollowing_question_count%2Cfollowing_favlists_count%2Cfollowing_columns_count%2Cavatar_hue%2Canswer_count%2Carticles_count%2Cpins_count%2Cquestion_count%2Ccolumns_count%2Ccommercial_question_count%2Cfavorite_count%2Cfavorited_count%2Clogs_count%2Cincluded_answers_count%2Cincluded_articles_count%2Cincluded_text%2Cmessage_thread_token%2Caccount_status%2Cis_active%2Cis_bind_phone%2Cis_force_renamed%2Cis_bind_sina%2Cis_privacy_protected%2Csina_weibo_url%2Csina_weibo_name%2Cshow_sina_weibo%2Cis_blocking%2Cis_blocked%2Cis_following%2Cis_followed%2Cis_org_createpin_white_user%2Cmutual_followees_count%2Cvote_to_count%2Cvote_from_count%2Cthank_to_count%2Cthank_from_count%2Cthanked_count%2Cdescription%2Chosted_live_count%2Cparticipated_live_count%2Callow_message%2Cindustry_category%2Corg_name%2Corg_homepage%2Cbadge%5B%3F(type%3Dbest_answerer)%5D.topics
---------------------------------简化提取需要的url-------------------------------------------------
-https://www.zhihu.com/api/v4/members/peng-dong-cheng-38?include=locations,employments,gender,educations,business,voteup_count,thanked_Count,follower_count,following_count,cover_url,following_topic_count,following_question_count,following_favlists_count,following_columns_count,avatar_hue,answer_count,articles_count,pins_count,question_count,columns_count,commercial_question_count,favorite_count,favorited_count,logs_count,included_answers_count,included_articles_count,included_text,message_thread_token,account_status,is_active,is_bind_phone,is_force_renamed,is_bind_sina,is_privacy_protected,sina_weibo_url,sina_weibo_name,show_sina_weibo,is_blocking,is_blocked,is_following,is_followed,is_org_createpin_white_user,mutual_followees_count,vote_to_count,vote_from_count,thank_to_count,thank_from_count,thanked_count,description,hosted_live_count,participated_live_count,allow_message,industry_category,org_name,org_homepage,badge%5B%3F(type%3Dbest_answerer)%5D.topics
+start_requests-->parse-->parse_relation-->parse
+
+
+时间戳变时间
+import time
+
+timestamp = 1500449608
+time_local = time.localtime(timestamp)
+time_local = time.strftime('%Y-%m-%d %H:%M:%S', time_local)
+print time_local
+
+time_c = one['created_time']
+item['created_time'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_c))
