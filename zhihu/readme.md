@@ -40,3 +40,5 @@ print time_local
 
 time_c = one['created_time']
 item['created_time'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_c))
+time_u = one['updated_time']
+item['updated_time'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_u))

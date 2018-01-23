@@ -1,18 +1,46 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for zhihu project
-#
-# For simplicity, this file contains only settings considered important or
-# commonly used. You can find more settings consulting the documentation:
-#
-#     https://doc.scrapy.org/en/latest/topics/settings.html
-#     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
-#     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
-
 BOT_NAME = 'zhihu'
 
 SPIDER_MODULES = ['zhihu.spiders']
 NEWSPIDER_MODULE = 'zhihu.spiders'
+
+
+# 重定向关闭
+REDIRECT_ENABLED = False
+RETRY_TIMES = 1
+#下载超时时间
+DOWNLOAD_TIMEOUT = 10 
+
+
+
+
+# 使用了scrapy-redis里的去重组件，不使用scrapy默认的去重
+DUPEFILTER_CLASS = "scrapy_redis.dupefilter.RFPDupeFilter"
+# 使用了scrapy-redis里的调度器组件，不使用scrapy默认的调度器
+SCHEDULER = "scrapy_redis.scheduler.Scheduler"
+# 允许暂停，redis请求记录不会丢失
+SCHEDULER_PERSIST = True
+# 队列形式，请求先进先出
+SCHEDULER_QUEUE_CLASS = "scrapy_redis.queue.SpiderQueue"
+# 指定数据库的主机IP
+REDIS_HOST = "127.0.0.1"
+# 指定数据库的端口号
+REDIS_PORT = 6379
+# 多台主机部署分布式爬虫时，在REDIS_URL中填入连接redis的主机URL
+REDIS_URL = None
+
+
+# 主机名
+MONGODB_HOST = '127.0.0.1'
+# 端口号
+MONGODB_PORT = 27017
+# 数据库名称
+MONGODB_DNNAME = 'zhihu'
+# 存放数据的表名称
+#MONGODB_SHEETNAME = ''
+
+
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -64,9 +92,9 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'zhihu.pipelines.ZhihuPipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'zhihu.pipelines.ZhihuPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
