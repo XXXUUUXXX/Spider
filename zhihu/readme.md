@@ -5,7 +5,7 @@ Github: https://github.com/AlexTan-b-z
 学习学习
 环境：windows
 软件： redis，mongodb,phantomjs
-模块：scrapy，scrapy-redis,selenium，pymongo
+模块：scrapy，scrapy-redis,selenium，pymongo，pytesseract
 python3安装scrapy
 python3 -m pip install scrapy
 
@@ -20,7 +20,7 @@ python3 -m pip install scrapy
 分布式
 去重
 支持手动识别验证码和自动识别验证码，自动登录需购买云打码账号，默认手动
-
+增加机器识别
 
 
 通过fiddler抓包的body为3000左右
