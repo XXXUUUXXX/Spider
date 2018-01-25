@@ -29,6 +29,8 @@ python3 -m pip install scrapy
 
 start_requests-->parse-->parse_relation-->parse
 
+多个item
+
 
 时间戳变时间
 import time
