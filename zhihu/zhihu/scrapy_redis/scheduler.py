@@ -159,6 +159,7 @@ class Scheduler(object):
         self.queue.clear()
 
     def enqueue_request(self, request):
+        # self.df.request_seen()去重                                                                     
         if not request.dont_filter and self.df.request_seen(request):
             self.df.log(request, self.spider)
             return False
