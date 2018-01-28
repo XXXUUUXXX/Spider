@@ -1,50 +1,36 @@
-#from scrapy.utils.reqser import request_to_dict, request_from_dict
+# -*- coding: utf-8 -*-
+
 from scrapy.utils.reqser import request_to_dict, request_from_dict, _find_method
-from . import picklecompat
+from scrapy.http import Request
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 
 class Base(object):
-    """Per-spider base queue class"""
+    """Per-spider queue/stack base class"""
 
-    def __init__(self, server, spider, key, serializer=None):
+    def __init__(self, server, spider, key, queue_name):
         """Initialize per-spider redis queue.
-        Parameters
-        ----------
-        server : StrictRedis
-            Redis client instance.
-        spider : Spider
-            Scrapy spider instance.
-        key: str
-            Redis key where to put and get messages.
-        serializer : object
-            Serializer object with ``loads`` and ``dumps`` methods.
+        Parameters:
+            server -- redis connection
+            spider -- spider instance
+            key -- key for this queue (e.g. "%(spider)s:queue")
         """
-        if serializer is None:
-            # Backward compatibility.
-            # TODO: deprecate pickle.
-            serializer = picklecompat
-        if not hasattr(serializer, 'loads'):
-            raise TypeError("serializer does not implement 'loads' function: %r"
-                            % serializer)
-        if not hasattr(serializer, 'dumps'):
-            raise TypeError("serializer '%s' does not implement 'dumps' function: %r"
-                            % serializer)
-
         self.server = server
         self.spider = spider
-        self.key = key % {'spider': spider.name}
-        self.serializer = serializer
+        self.key = key % {'spider': queue_name}
 
-    #将Request对象转化成字符串 
+    #将Request对象转化成字符串
     def _encode_request(self, request):
         """Encode a request object"""
-        obj = request_to_dict(request, self.spider)
-        return self.serializer.dumps(obj)
+        return pickle.dumps(request_to_dict(request, self.spider), protocol=-1)
 
     def _decode_request(self, encoded_request):
         """Decode an request previously encoded"""
-        obj = self.serializer.loads(encoded_request)
-        return request_from_dict(obj, self.spider)
+        return request_from_dict(pickle.loads(encoded_request), self.spider)
 
     def __len__(self):
         """Return the length of the queue"""
@@ -63,7 +49,7 @@ class Base(object):
         self.server.delete(self.key)
 
 
-class FifoQueue(Base):
+class SpiderQueue(Base):
     """Per-spider FIFO queue"""
 
     def __len__(self):
@@ -85,8 +71,9 @@ class FifoQueue(Base):
         if data:
             return self._decode_request(data)
 
+
 # 使用了redis的zset数据结构(可以给种子加优先级)
-class PriorityQueue(Base):
+class SpiderPriorityQueue(Base):
     """Per-spider priority queue abstraction using redis' sorted set"""
 
     def __len__(self):
@@ -96,11 +83,8 @@ class PriorityQueue(Base):
     def push(self, request):
         """Push a request"""
         data = self._encode_request(request)
-        score = -request.priority
-        # We don't use zadd method as the order of arguments change depending on
-        # whether the class is Redis or StrictRedis, and the option of using
-        # kwargs only accepts strings, not bytes.
-        self.server.execute_command('ZADD', self.key, score, data)
+        pairs = {data: -request.priority}
+        self.server.zadd(self.key, **pairs)
 
     def pop(self, timeout=0):
         """
@@ -116,8 +100,43 @@ class PriorityQueue(Base):
             return self._decode_request(results[0])
 
 
-class LifoQueue(Base):
-    """Per-spider LIFO queue."""
+# 将callback函数名和url拼接成一条字符串作为一条种子，这样种子的长度至少会减少一半
+# 种子不需要设优先级，不用zset，改用redis的list
+class SpiderSimpleQueue(Base):
+    """ url + callback """
+
+    def __len__(self):
+        """Return the length of the queue"""
+        return self.server.llen(self.key)
+
+    def push(self, request):
+        """Push a request"""
+        url = request.url
+        cb = request.callback
+        if callable(cb):
+            cb = _find_method(self.spider, cb)
+            data = '%s--%s' % (cb, url)
+            self.server.lpush(self.key, data)
+
+    def pop(self, timeout=0):
+        """Pop a request"""
+        if timeout > 0:
+            data = self.server.brpop(self.key, timeout=timeout)
+            if isinstance(data, tuple):
+                data = data[1]
+        else:
+            data = self.server.rpop(self.key)
+        if data:
+            cb, url = data.split('--', 1)
+            try:
+                cb = getattr(self.spider, str(cb))
+                return Request(url=url, callback=cb)
+            except AttributeError:
+                raise ValueError("Method %r not found in: %s" % (cb, self.spider))
+
+
+class SpiderStack(Base):
+    """Per-spider stack"""
 
     def __len__(self):
         """Return the length of the stack"""
@@ -139,43 +158,5 @@ class LifoQueue(Base):
         if data:
             return self._decode_request(data)
 
-# 新建一个种子处理类(简单粗暴QAQ)
-# 将callback函数名和url拼接成一条字符串作为一条种子，这样种子的长度至少会减少一半
-# 种子不需要设优先级，不用zset，改用redis的list
-class SpiderSimpleQueue(Base):
-    """url + callback"""
 
-    def __len__(self):
-        """Return the length of the queue"""
-        return self.server.llen(self.key)
-
-    def push(self, request):
-        """Push a request"""
-        url = request.url
-        cb = request.callback
-        if callback(cb):
-            cb = _find_method(self.spider, cb)
-            data = '%s--%s' % (cb, url)
-            self.server.lpush(self.key, data)
-
-    def pop(self, timeout = 0):
-        """Pop a request"""
-        if timeout > 0:
-            data = self.server.brpop(self.key, timeout=timeout)
-            if isinstance(data, tuple):
-                data = data[1]
-        else:
-            data = self.server.rpop(self.key)
-        if data:
-            cb, url = data.split('--', 1)
-            try:
-                cb = getattr(self.spider, str(cb))
-                return Request(url=url, callback=cb)
-            except AttributeError:
-                raise ValueError("Method %r not found in: %s" % (cb, self.spider))
-                
-
-# TODO: Deprecate the use of these names.
-SpiderQueue = FifoQueue
-SpiderStack = LifoQueue
-SpiderPriorityQueue = PriorityQueue
+__all__ = ['SpiderQueue', 'SpiderPriorityQueue', 'SpiderSimpleQueue', 'SpiderStack']

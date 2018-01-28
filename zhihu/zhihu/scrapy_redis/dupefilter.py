@@ -96,9 +96,14 @@ class RFPDupeFilter(BaseDupeFilter):
 
         """
         fp = self.request_fingerprint(request)
+        if self.bf.isContains(fp):  # 如果已经存在
+            return True
+        else:
+            self.bf.insert(fp)
+            return False
         # This returns the number of values added, zero if already exists.
-        added = self.server.sadd(self.key, fp)
-        return added == 0
+        #added = self.server.sadd(self.key, fp)
+        #return added == 0
 
     def request_fingerprint(self, request):
         """Returns a fingerprint for a given request.

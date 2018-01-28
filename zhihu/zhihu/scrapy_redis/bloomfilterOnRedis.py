@@ -55,13 +55,4 @@ class BloomFilter(object):
         for f in self.hashfunc:
             loc = f.hash(str_input)
             self.server.setbit(name, loc, 1)
-
-
-if __name__ == '__main__':
-    """ 第一次运行时会显示 not exists!，之后再运行会显示 exists! """
-    bf = BloomFilter()
-    if bf.isContains('http://www.baidu.com'):   # 判断字符串是否存在
-        print 'exists!'
-    else:
-        print 'not exists!'
-        bf.insert('http://www.baidu.com')
+            
