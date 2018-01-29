@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 
-
+import os
+import logging
+import json
+import redis
+import random
+import base64
+import requests
+from settings import USER_AGENTS
+from cookie import init_cookie, update_cookie, remove_cookie
+from scrapy.utils.response import response_status_message
+from scrapy.downloadermiddlewares.retry import RetryMiddleware
+from scrapy.exceptions import IgnoreRequest
 
 from scrapy import signals
 
+
+logger = logging.getLogger(__name__)
 
 class ZhihuSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,
@@ -98,3 +111,72 @@ class ZhihuDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+
+class RandomUserAgent(object):
+    def process_request(self, request, spider):
+        useragent = random.choice(USER_AGENTS)
+        request.headers.setdefault("User-Agent", useragent)
+
+def get_proxy():
+    return requests.get("http://127.0.0.1:5010/get/").content
+
+def delete_proxy(proxy):
+    requests.get("http://127.0.0.1:5010/delete/?proxy={}".format(proxy))
+
+def getHtml():
+    retry_count = 5
+    proxy = get_proxy()
+    while retry_count > 0:
+        try:
+            html = requests.get('https://www.example.com', proxies={"http": "http://{}".format(proxy)})
+            # 使用代理访问
+            return html
+        except Exception:
+            retry_count -= 1
+    # 出错5次, 删除代理池中代理
+    delete_proxy(proxy)
+    return None
+
+class RandomProxy(object):
+    def process_request(self, request, spider):
+        proxy = get_proxy()
+
+class CookieMiddleware(RetryMiddleware):
+    """维护cookie"""
+
+    def __init__(self, settings, crawler):
+        RetryMiddleware.__init__(self, settings)
+        self.rconn = settings.get('RCONN', redis.Redis(crawler.settings.get('REDIS_HOST', 'localhost'), crawler.settings.get('REDIS_PORT', 6379)))
+        init_cookie(self.rconn, crawler.spider.name)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler.settings, crawler)
+
+    def process_request(self, request, spider):
+        redis_keys = self.rconn.keys()
+        while len(redis_keys) > 0:
+            elem = random.choice(redis_keys)
+            if b'zhihuspider:Cookies' in elem:
+                elem = str(elem, 'utf-8')
+                cookie  json.loads(str(self.rconn.get(elem), 'utf-8'))
+                request.cookies = cookie
+                request.meta['account_text'] = elem.split('Cookies:')[-1]
+                break
+            else:
+                redis_keys.remove(elem)
+
+    def process_response(self, request, response, spider):
+        reason = response_status_message(response.status)
+        if response.status in [300, 301, 302, 303]:
+            if reason == '301 Moved Permanently':
+                return self._retry(request, reason, spider) or response
+            else:
+                raise IgnoreRequest
+        elif response.status in [403, 414]:
+            logger.error("%s! Stopping..." % response.status)
+            os.system("pause")
+            update_cookie(request.meta['account_text'], self.rconn, spider.name, request.cookies)
+            return self._retry(request, reason, spider) or response  # 重试
+        else:
+            return response
