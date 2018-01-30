@@ -1,5 +1,5 @@
-#from scrapy.utils.reqser import request_to_dict, request_from_dict
-from scrapy.utils.reqser import request_to_dict, request_from_dict, _find_method
+from scrapy.utils.reqser import request_to_dict, request_from_dict
+
 from . import picklecompat
 
 
@@ -8,6 +8,7 @@ class Base(object):
 
     def __init__(self, server, spider, key, serializer=None):
         """Initialize per-spider redis queue.
+
         Parameters
         ----------
         server : StrictRedis
@@ -18,6 +19,7 @@ class Base(object):
             Redis key where to put and get messages.
         serializer : object
             Serializer object with ``loads`` and ``dumps`` methods.
+
         """
         if serializer is None:
             # Backward compatibility.
@@ -35,7 +37,6 @@ class Base(object):
         self.key = key % {'spider': spider.name}
         self.serializer = serializer
 
-    #将Request对象转化成字符串 
     def _encode_request(self, request):
         """Encode a request object"""
         obj = request_to_dict(request, self.spider)
@@ -85,7 +86,7 @@ class FifoQueue(Base):
         if data:
             return self._decode_request(data)
 
-# 使用了redis的zset数据结构(可以给种子加优先级)
+
 class PriorityQueue(Base):
     """Per-spider priority queue abstraction using redis' sorted set"""
 
@@ -138,42 +139,6 @@ class LifoQueue(Base):
 
         if data:
             return self._decode_request(data)
-
-# 新建一个种子处理类(简单粗暴QAQ)
-# 将callback函数名和url拼接成一条字符串作为一条种子，这样种子的长度至少会减少一半
-# 种子不需要设优先级，不用zset，改用redis的list
-class SpiderSimpleQueue(Base):
-    """url + callback"""
-
-    def __len__(self):
-        """Return the length of the queue"""
-        return self.server.llen(self.key)
-
-    def push(self, request):
-        """Push a request"""
-        url = request.url
-        cb = request.callback
-        if callback(cb):
-            cb = _find_method(self.spider, cb)
-            data = '%s--%s' % (cb, url)
-            self.server.lpush(self.key, data)
-
-    def pop(self, timeout = 0):
-        """Pop a request"""
-        if timeout > 0:
-            data = self.server.brpop(self.key, timeout=timeout)
-            if isinstance(data, tuple):
-                data = data[1]
-        else:
-            data = self.server.rpop(self.key)
-        if data:
-            cb, url = data.split('--', 1)
-            try:
-                cb = getattr(self.spider, str(cb))
-                return Request(url=url, callback=cb)
-            except AttributeError:
-                raise ValueError("Method %r not found in: %s" % (cb, self.spider))
-                
 
 # TODO: Deprecate the use of these names.
 SpiderQueue = FifoQueue

@@ -55,24 +55,3 @@ class BloomFilter(object):
         for f in self.hashfunc:
             loc = f.hash(str_input)
             self.server.setbit(name, loc, 1)
-
-
-if __name__ == '__main__':
-    """ 第一次运行时会显示 not exists!，之后再运行会显示 exists! """
-    bf = BloomFilter()
-    if bf.isContains('http://www.baidu.com'):   # 判断字符串是否存在
-        print 'exists!'
-    else:
-        print 'not exists!'
-        bf.insert('http://www.baidu.com')
-
-#-------------------------------------------------------------------------------
-在settings.py中添加：
-FILTER_URL = None
-FILTER_HOST = 'localhost'
-FILTER_PORT = 6379
-FILTER_DB = 0
-#REDIS_QUEUE_NAME = 'OneName' #如果不设置或者设置为None，则使用默认的，每个spider使用不同的去重队列和种子队列。
-                              #如果设置了，则不同spider公用去重队列和种子队列
-#-------------------------------------------------------------------------------
-在scrapy-redis的defaults.py中修改：

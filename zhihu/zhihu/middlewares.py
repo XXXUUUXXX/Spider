@@ -7,8 +7,8 @@ import redis
 import random
 import base64
 import requests
-from settings import USER_AGENTS
-from cookie import init_cookie, update_cookie, remove_cookie
+from .settings import USER_AGENTS
+from .cookie import init_cookie, update_one_cookie, remove_cookie
 from scrapy.utils.response import response_status_message
 from scrapy.downloadermiddlewares.retry import RetryMiddleware
 from scrapy.exceptions import IgnoreRequest
@@ -159,7 +159,7 @@ class CookieMiddleware(RetryMiddleware):
             elem = random.choice(redis_keys)
             if b'zhihuspider:Cookies' in elem:
                 elem = str(elem, 'utf-8')
-                cookie  json.loads(str(self.rconn.get(elem), 'utf-8'))
+                cookie = json.loads(str(self.rconn.get(elem), 'utf-8'))
                 request.cookies = cookie
                 request.meta['account_text'] = elem.split('Cookies:')[-1]
                 break

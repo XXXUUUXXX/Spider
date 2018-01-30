@@ -13,7 +13,7 @@ RETRY_TIMES = 1
 DOWNLOAD_TIMEOUT = 10 
 
 
-USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36'
+#USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36'
 
 
 # 使用了scrapy-redis里的去重组件，不使用scrapy默认的去重
@@ -40,31 +40,24 @@ FILTER_DB = 0
 
 
 
-# 主机名
-MONGODB_HOST = '127.0.0.1'
-# 端口号
-MONGODB_PORT = 27017
-# 数据库名称
-MONGODB_DNNAME = 'zhihu'
-# 存放数据的表名称
-#MONGODB_SHEETNAME = ''
+MONGO_URI = 'mongodb://127.0.0.1:27017/'
+MONGO_DATABASE = 'zhihu'
 
 
 DOWNLOADER_MIDDLEWARES = {
     'zhihu.middlewares.RandomUserAgent': 100,
     'zhihu.middlewares.RandomProxy': 200,
-    'zhihu.middlewares.CookiesMiddleware': 300,
+    'zhihu.middlewares.CookieMiddleware': 300,
     
     #'zhihu.middlewares.ZhihuDownloaderMiddleware': 543,
 }
 
 
 ITEM_PIPELINES = {
-    'zhihu.pipelines.ZhihuPipeline': 300,
+    'zhihu.pipelines.ZhihuPipeline': 301,
 }
 
 
-'''
 DOWNLOAD_DELAY = 3
 #启动自动限速扩展
 AUTOTHROTTLE_ENABLED = True
@@ -72,7 +65,7 @@ AUTOTHROTTLE_ENABLED = True
 AUTOTHROTTLE_START_DELAY = 3
 # 在高延迟情况下最大的下载延迟
 AUTOTHROTTLE_MAX_DELAY = 60
-'''
+
 
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 5.1; U; en; rv:1.8.1) Gecko/20061208 Firefox/2.0.0 Opera 9.50',

@@ -1,6 +1,7 @@
 import logging
 import time
-
+import pdb
+from .BloomfilterOnRedis import BloomFilter
 from scrapy.dupefilters import BaseDupeFilter
 from scrapy.utils.request import request_fingerprint
 
@@ -37,6 +38,7 @@ class RFPDupeFilter(BaseDupeFilter):
         self.server = server
         self.key = key
         self.debug = debug
+        self.bf = BloomFilter(server, key, blockNum=1)  # you can increase blockNum if your are filtering too many urls
         self.logdupes = True
 
     @classmethod
@@ -95,15 +97,12 @@ class RFPDupeFilter(BaseDupeFilter):
         bool
 
         """
-        fp = self.request_fingerprint(request)
-        if self.bf.isContains(fp):  # 如果已经存在
+        fp = request_fingerprint(request)
+        if self.bf.isContains(fp):
             return True
         else:
             self.bf.insert(fp)
             return False
-        # This returns the number of values added, zero if already exists.
-        #added = self.server.sadd(self.key, fp)
-        #return added == 0
 
     def request_fingerprint(self, request):
         """Returns a fingerprint for a given request.

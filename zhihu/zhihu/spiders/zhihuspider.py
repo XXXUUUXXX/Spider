@@ -7,17 +7,17 @@ import time
 #import pdb
 #from scrapy.http import Request
 from zhihu.items import ZhihuItem, RelationItem, AnswerItem, QuestionItem, ArticleItem
-from scrapy_redis.spiders import RedisSpider
+from zhihu.scrapy_redis.spiders import RedisSpider
 
 
 class ZhihuspiderSpider(RedisSpider):
     name = 'zhihuspider'
     redis_key = 'zhihuspider:start_urls'
 
-    allowed_domains = ['www.zhihu.com']
-    start_urls = ['http://www.zhihu.com/']
+    #allowed_domains = ['www.zhihu.com']
+    #start_urls = ['http://www.zhihu.com/']
 
-    #start_user_id = ['peng-dong-cheng-38']
+    start_user_id = ['peng-dong-cheng-38']
 
 
     def start_requests(self):
@@ -27,7 +27,7 @@ class ZhihuspiderSpider(RedisSpider):
             # 在下一个函数中取出value1，只需得到上一个函数的meta['key1']即可
             # 因为meta是随着Request产生是传递的，下一个函数得到的Response对象中就会有meta
             # 即response.meta  取value1则是value1 = response.meta['key1']
-            yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'?include=locations,employments,industry_category,gender,educations,business,follower_count,following_count,description,badge[?(type=best_answerer)].topics',meta={'user_id':one},callback=self.parse)
+            yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'?include=locations,employments,industry_category,gender,educations,business,follower_count,following_count,description,badge[?(type=best_answerer)].topics', meta={'user_id':one}, callback=self.parse)
 
     def parse(self, response):
         # 将response(json)转换成字符串型，并替换其中的false和true
@@ -86,7 +86,7 @@ class ZhihuspiderSpider(RedisSpider):
 
         # 教育经历
         # 创建空列表，异常判断返回学校：专业
-        item['educations'] = []
+        item['education'] = []
         for i in dict_result['educations']:
             try:
                 educations = i['school']['name'] + ':' + i['major']['name']
@@ -95,7 +95,7 @@ class ZhihuspiderSpider(RedisSpider):
                     educations = i['school']['name']
                 except:
                     pass
-            item['educations'].append(educations)
+            item['education'].append(educations)
 
         # 关注人数
         item['followees_num'] = dict_result['following_count']
@@ -197,7 +197,7 @@ class ZhihuspiderSpider(RedisSpider):
             # 提问标题
             item['title'] = one.xpath('.//a/text()').extract()[0]
             # 问题的id
-            item['question_id'] = one.xpath('.//a/@href').extract()[0].replace('/question/'.'')
+            item['question_id'] = one.xpath('.//a/@href').extract()[0].replace('/question/','')
             # 提问时间
             item['ask_time'] = one.xpath('.//span/text()').extract()[0]
             # 回答数量

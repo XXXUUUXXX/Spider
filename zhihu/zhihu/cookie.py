@@ -29,7 +29,7 @@ logging.getLogger("selenium").setLevel(logging.WARNING) # 将selenium的日志�
 
 METHOD = 0 # 0手动输入验证码， 1云打码， 2机器识别 
 
-myZhiHu = [('account', 'password', 0)] # 0手机， 1邮箱
+myZhiHu = [('18735120367', 'tian1538', 0)] # 0手机， 1邮箱
 
 def captcha(captcha_data):
     with open('captcha.jpg', 'wb') as f:
@@ -111,7 +111,6 @@ def get_cookie(account, password, way):
                 logger.warning('验证码或账号密码错误%s'% account)
             except:
                 break
-
         try:
             # 登录成功，右上角显示用户
             driver.find_element_by_class_name('top-nav-profile')
