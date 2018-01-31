@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pymongo
-from zhihu.items import ZhihuItem,RelationItem,AnswerItem,ArticleItem,QuestionItem
+from .items import ZhihuItem,RelationItem,AnswerItem,ArticleItem,QuestionItem
 
 
 class ZhihuPipeline(object):

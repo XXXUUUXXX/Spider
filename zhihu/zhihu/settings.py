@@ -13,7 +13,7 @@ RETRY_TIMES = 1
 DOWNLOAD_TIMEOUT = 10 
 
 
-#USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36'
+USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.86 Safari/537.36'
 
 
 # 使用了scrapy-redis里的去重组件，不使用scrapy默认的去重
@@ -23,7 +23,7 @@ SCHEDULER = "zhihu.scrapy_redis.scheduler.Scheduler"
 # 允许暂停，redis请求记录不会丢失
 SCHEDULER_PERSIST = True
 # 队列形式，请求先进先出
-SCHEDULER_QUEUE_CLASS = "scrapy_redis.queue.SpiderQueue"
+#SCHEDULER_QUEUE_CLASS = "scrapy_redis.queue.SpiderQueue"
 
 
 # 种子队列
@@ -33,7 +33,7 @@ REDIS_URL = None # 多台主机部署分布式爬虫时，在REDIS_URL中填入�
 
 # 去重队列
 FILTER_URL = None
-FILTER_HOST = 'localhost'
+FILTER_HOST = '127.0.0.1'
 FILTER_PORT = 6379
 FILTER_DB = 0
 # REDIS_QUEUE_NAME = 'OneName'   # 如果不设置或者设置为None，则使用默认的，每个spider使用不同的去重队列和种子队列。如果设置了，则不同spider共用去重队列和种子队列
@@ -45,9 +45,9 @@ MONGO_DATABASE = 'zhihu'
 
 
 DOWNLOADER_MIDDLEWARES = {
-    'zhihu.middlewares.RandomUserAgent': 100,
-    'zhihu.middlewares.RandomProxy': 200,
-    'zhihu.middlewares.CookieMiddleware': 300,
+    'zhihu.middlewares.RandomUserAgent': 543,
+    'zhihu.middlewares.RandomProxy': 544,
+    'zhihu.middlewares.CookieMiddleware': 545,
     
     #'zhihu.middlewares.ZhihuDownloaderMiddleware': 543,
 }

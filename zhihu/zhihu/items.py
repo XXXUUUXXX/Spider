@@ -21,7 +21,7 @@ class ZhihuItem(Item):
     # 职业经历
     employments = Field()
     # 教育经历
-    educations = Field()
+    education = Field()
     # 关注人数
     followees_num = Field()
     # 粉丝人数

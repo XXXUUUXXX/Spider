@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+#修改spider_name为spiderName
 import os
 import time
 import json
@@ -29,8 +30,9 @@ logging.getLogger("selenium").setLevel(logging.WARNING) # 将selenium的日志�
 
 METHOD = 0 # 0手动输入验证码， 1云打码， 2机器识别 
 
-myZhiHu = [('18735120367', 'tian1538', 0)] # 0手机， 1邮箱
+myZhiHu = [('account', 'password', 0),] # 0手机， 1邮箱
 
+"""
 def captcha(captcha_data):
     with open('captcha.jpg', 'wb') as f:
         f.write(captcha_data)
@@ -45,7 +47,7 @@ def captcha(captcha_data):
     else:
         return input("请输入验证码：")
 
-"""
+
 def get_captcha():
     # 构建一个Session对象，可以保存页面Cookie
     sess = requests.Session()
@@ -103,11 +105,11 @@ def get_cookie(account, password, way):
                     code_text = identify()
                 login_DIV.find_element_by_name('captcha').send_keys(code_text)
             # 点击登录按钮
-            login_DIV.find_element_by_class_name('submit zg-btn-blue').click()
+            login_DIV.find_element_by_class_name('zg-btn-blue').click()
             time.sleep(3)
             # 验证码或账号密码错误时退出循环
             try:
-                login_DIV.find_element_by_class_name('error is-visible')
+                login_DIV.find_element_by_class_name('error')
                 logger.warning('验证码或账号密码错误%s'% account)
             except:
                 break
@@ -160,7 +162,7 @@ def update_cookie(account, cookie):
         #captcha_data = requests.Session.get(captcha_url, headers = headers).content
         #code_text = captcha(captcha_data)
     else:
-        img = login_DIV.find_element_by_class_name('unhuman-captcha')
+        img = login_DIV.find_element_by_class_name('Unhuman-captcha')
         x = img.location['x']
         y = img.location['y']
         image = Image.open('zhihu.png')
@@ -185,35 +187,35 @@ def update_cookie(account, cookie):
         except Exception:
             pass
 
-def init_cookie(rconn, spider_name):
+def init_cookie(rconn, spiderName):
     """获取所有账号的Cookies，存入Redis。如果Redis已有该账号的Cookie，则不再获取。"""
     for zhihu in myZhiHu:
-        if rconn.get('%s:Cookies:%s--%s' % (spider_name, zhihu[0], zhihu[1])) is None:
+        if rconn.get('%s:Cookies:%s--%s' % (spiderName, zhihu[0], zhihu[1])) is None:
             # 调用get_cookie函数获取cookie
             cookie = get_cookie(zhihu[0],zhihu[1],zhihu[2])
             if len(cookie) > 0:
-                rconn.set('%s:Cookies:%s--%s' % (spider_name, zhihu[0], zhihu[1]), cookie)
+                rconn.set('%s:Cookies:%s--%s' % (spiderName, zhihu[0], zhihu[1]), cookie)
     cookie_num = str(rconn.keys()).count('zhihuspider:Cookies')
     logger.warning('The num of the cookies is %s' % cookie_num)
     if cookie_num == 0:
         logger.warning('stopping.....')
         os.system('pause')
 
-def update_one_cookie(account_text, rconn, spider_name, cookie):
+def update_one_cookie(account_text, rconn, spiderName, cookie):
     """ 更新一个账号的Cookie """
     account = account_text.split('--')[0]
     # 调用update_cookie函数更新cookie
     new_cookie = update_cookie(account, cookie)
     if len(new_cookie) > 0:
         logger.warning('The cookie of %s has been updated successfully!' % account)
-        rconn.set('%s:Cookies:%s' % (spider_name, account_text), new_cookie)
+        rconn.set('%s:Cookies:%s' % (spiderName, account_text), new_cookie)
     else:
         logger.warning('The cookie of %s updated failed! Remove it' % account_text)
-        remove_cookie(account_text, rconn, spider_name)
+        remove_cookie(account_text, rconn, spiderName)
 
-def remove_cookie(account_text, rconn, spider_name):
+def remove_cookie(account_text, rconn, spiderName):
     """ 删除某个账号的Cookie """
-    rconn.delete('%s:Cookies:%s' % (spider_name, account_text))
+    rconn.delete('%s:Cookies:%s' % (spiderName, account_text))
     cookie_num = str(rconn.keys()).count('zhihuspider:Cookies')
     logger.warning('The num of the cookies left is %s' % cookie_num)
     if cookie_num == 0:

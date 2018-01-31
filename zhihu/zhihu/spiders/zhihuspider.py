@@ -4,21 +4,18 @@ import scrapy
 import re
 import json
 import time
-#import pdb
+
 #from scrapy.http import Request
-from zhihu.items import ZhihuItem, RelationItem, AnswerItem, QuestionItem, ArticleItem
-from zhihu.scrapy_redis.spiders import RedisSpider
+from ..items import ZhihuItem, RelationItem, AnswerItem, QuestionItem, ArticleItem
+from ..scrapy_redis.spiders import RedisSpider
 
 
 class ZhihuspiderSpider(RedisSpider):
     name = 'zhihuspider'
     redis_key = 'zhihuspider:start_urls'
-
     #allowed_domains = ['www.zhihu.com']
     #start_urls = ['http://www.zhihu.com/']
-
-    start_user_id = ['peng-dong-cheng-38']
-
+    start_user_id = ['yun-he-shu-ju-8','miao-bi-xiao-xian']
 
     def start_requests(self):
         for one in self.start_user_id:
@@ -108,13 +105,12 @@ class ZhihuspiderSpider(RedisSpider):
         item = RelationItem()
         # start_requests返回的用户id
         one = response.meta['user_id']
+        # 关系人的id
+        item['relations_id'] = []
         # 用户id
         item['user_id'] = one
         # 关系类型(关注了，关注者)
         item['relation_type'] = ''
-        # 关系人的id
-        item['relations_id'] = []
-
         # 粉丝
         yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'/followers?include=data[*].answer_count,badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_relation,meta={'item':item,'offset':0,'relation_type':'followers'})
         # 关注
@@ -135,7 +131,7 @@ class ZhihuspiderSpider(RedisSpider):
         relations_id = []
         for one in dict_result['data']:
             relations_id.append(one['url_token'])
-        response.meta['item']['relation_type'] = relations_id
+        response.meta['item']['relations_id'] = relations_id
 
         if response.meta['offset'] == 0:
             response.meta['item']['relation_type'] = response.meta['relation_type']
@@ -187,7 +183,7 @@ class ZhihuspiderSpider(RedisSpider):
             next_page = re.findall('(.*offset=)\d+', response.url)[0]
             yield scrapy.Request(next_page + str(offset), callback = self.parse_answer, meta = {'answer_user_id': response.meta['answer_user_id'], 'offset': offset})
 
-    def parse_question(self, reponse):
+    def parse_question(self, response):
         # 用xpath提取提问页面信息
         data = response.xpath('//div[@class="List-item"]')
         for one in data:
@@ -220,7 +216,7 @@ class ZhihuspiderSpider(RedisSpider):
         for one in dict_result['data']:
             item = ArticleItem()
             # 作者id
-            item['author_id'] = response.meat['author_id']
+            item['author_id'] = response.meta['author_id']
             # 文章标题
             item['title'] = one['title'] 
             # 文章id
