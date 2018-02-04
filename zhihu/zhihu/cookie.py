@@ -30,7 +30,7 @@ logging.getLogger("selenium").setLevel(logging.WARNING) # 将selenium的日志�
 
 METHOD = 0 # 0手动输入验证码， 1云打码， 2机器识别 
 
-myZhiHu = [('18735120367', 'tian1538', 0),] # 0手机， 1邮箱
+myZhiHu = [('account', 'password', 0),] # 0手机， 1邮箱
 
 """
 def captcha(captcha_data):
