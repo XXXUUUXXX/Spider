@@ -11,7 +11,7 @@ from contextlib import closing
 class Photos(object):
     def __init__(self):
         self.photos_id = []
-        self.download_url = 'https://unsplash.com/photos/photo_id/download?force=true'
+        self.download_url = 'https://unsplash.com/photos/xxxxx/download?force=true'
         self.url = 'https://unsplash.com/napi/feeds/home'
         self.headers = {
                 'Authorization': 'Client-ID c94869b36aa272dd62dfaeefed769d4115fb3189a9d1ec88ed457207747be626',
@@ -37,20 +37,22 @@ class Photos(object):
 
     def download(self, photo_id, filename):
         """下载图片"""
-        url = self.download_url.replace('photo_id', photo_id)
+        url = self.download_url.replace('xxxxx', photo_id)
         # stream=True,默认情况下，当你进行网络请求后，响应体会立即被下载，通过stream参数覆盖这个行为，推迟下载响应体直到访问response.content属性
-        with closing(requests.get(url = url, stream = True, headers = self.headers)) as r:
-            with open('%d.jpg' % filename, 'ab+') as f: # ab+表示以二进制格式打开一个文件用于追加，如果文件已经存在，文件指针将会放在文件的结尾
-                for chunk in r.iter_content(chunk_size = 1024):
-                    if chunk:
-                        f.write(chunk)
+        with closing(requests.get(url = url, stream = True, headers = self.headers)) as response:
+            with open('%d.jpg' % filename, 'ab+') as f:  # ab+表示以二进制格式打开一个文件用于追加，如果文件已经存在，文件指针将会放在文件的结尾
+                for data in response.iter_content(chunk_size = 1024):  # chunk_size = 1024 单次请求最大值
+                    if data:
+                        f.write(data)
                         f.flush()
+        print('下载完成。。。')
+
 if __name__ == '__main__':
     p = Photos( )
     p.get_ids()
     print('图片下载中。。。')
     for i in range(len(p.photos_id)):
-        print('正在下载第%张图片'% (i+1))
+        print('正在下载第%d张图片'% (i+1))
         p.download(p.photos_id[i], (i+1))
 
 
