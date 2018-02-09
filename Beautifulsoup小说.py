@@ -22,6 +22,7 @@ class Downloader(object):
         div_bf = BeautifulSoup(html, 'lxml')  # div标签
         div = div_bf.find_all('div', class_ = 'listmain')
         a_bf = BeautifulSoup(str(div[0]), 'lxml')  # a标签
+        print(a_bf)
         a = a_bf.find_all('a')
         self.nums = len(a[15:])  # 剔除前几个无用章节
         # .get获取属性值   .string获取标签名
@@ -43,7 +44,6 @@ class Downloader(object):
 
     def write_contents(self, name, path, text):
         """写入文件"""
-        #write_flag = True
         with open(path, 'a', encoding='utf-8') as f:
             # 写入的顺序：章节名->内容->2个换行
             f.write(name + '\n')
