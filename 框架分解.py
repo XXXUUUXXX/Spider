@@ -11,7 +11,6 @@ def get_proxy():
 def delete_proxy(proxy):
     requests.get("http://127.0.0.1:5010/delete/?proxy={}".format(proxy))
 
-# your spider code
 
 def getHtml():
     retry_count = 5
