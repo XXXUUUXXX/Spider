@@ -5,7 +5,7 @@ import re
 import json
 import time
 
-#from scrapy.http import Request
+from scrapy.http import Request
 from ..items import ZhihuItem, RelationItem, AnswerItem, QuestionItem, ArticleItem
 from ..scrapy_redis.spiders import RedisSpider
 
@@ -24,7 +24,7 @@ class ZhihuspiderSpider(RedisSpider):
             # 在下一个函数中取出value1，只需得到上一个函数的meta['key1']即可
             # 因为meta是随着Request产生是传递的，下一个函数得到的Response对象中就会有meta
             # 即response.meta  取value1则是value1 = response.meta['key1']
-            yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'?include=locations,employments,industry_category,gender,educations,business,follower_count,following_count,description,badge[?(type=best_answerer)].topics', meta={'user_id':one}, callback=self.parse)
+            yield Request('https://www.zhihu.com/api/v4/members/'+one+'?include=locations,employments,industry_category,gender,educations,business,follower_count,following_count,description,badge[?(type=best_answerer)].topics', meta={'user_id':one}, callback=self.parse)
 
     def parse(self, response):
         # 将response(json)转换成字符串型，并替换其中的false和true
@@ -112,15 +112,15 @@ class ZhihuspiderSpider(RedisSpider):
         # 关系类型(关注了，关注者)
         item['relation_type'] = ''
         # 粉丝
-        yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'/followers?include=data[*].answer_count,badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_relation,meta={'item':item,'offset':0,'relation_type':'followers'})
+        yield Request('https://www.zhihu.com/api/v4/members/'+one+'/followers?include=data[*].answer_count,badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_relation,meta={'item':item,'offset':0,'relation_type':'followers'})
         # 关注
-        yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'/followees?include=data[*].answer_count,badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_relation,meta={'item':item,'offset':0,'relation_type':'followees'})
+        yield Request('https://www.zhihu.com/api/v4/members/'+one+'/followees?include=data[*].answer_count,badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_relation,meta={'item':item,'offset':0,'relation_type':'followees'})
         # 回答
-        yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'/answers?include=data[*].comment_count,content,voteup_count,created_time,updated_time;data[*].author.badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_answer,meta={'answer_user_id':one,'offset':0})
+        yield Request('https://www.zhihu.com/api/v4/members/'+one+'/answers?include=data[*].comment_count,content,voteup_count,created_time,updated_time;data[*].author.badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_answer,meta={'answer_user_id':one,'offset':0})
         # 提问
-        yield scrapy.Request('https://www.zhihu.com/people/'+one+'/asks?page=1',callback=self.parse_question,meta={'ask_user_id':one,'page':1})
+        yield Request('https://www.zhihu.com/people/'+one+'/asks?page=1',callback=self.parse_question,meta={'ask_user_id':one,'page':1})
         # 文章
-        yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'/articles?include=data[*].comment_count,content,voteup_count,created,updated;data[*].author.badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_article,meta={'author_id':one,'offset':0})
+        yield Request('https://www.zhihu.com/api/v4/members/'+one+'/articles?include=data[*].comment_count,content,voteup_count,created,updated;data[*].author.badge[?(type=best_answerer)].topics&limit=20&offset=0',callback=self.parse_article,meta={'author_id':one,'offset':0})
 
 
     def parse_relation(self, response):
@@ -141,14 +141,14 @@ class ZhihuspiderSpider(RedisSpider):
 
         # 进入关系人主页获取信息
         for one in response.meta['item']['relations_id']:
-            yield scrapy.Request('https://www.zhihu.com/api/v4/members/'+one+'?include=locations,employments,industry_category,gender,educations,business,follower_count,following_count,description,badge[?(type=best_answerer)].topics',meta={'user_id':one},callback=self.parse)
+            yield Request('https://www.zhihu.com/api/v4/members/'+one+'?include=locations,employments,industry_category,gender,educations,business,follower_count,following_count,description,badge[?(type=best_answerer)].topics',meta={'user_id':one},callback=self.parse)
         
         # 有后续页面则offset+20
         if dict_result['paging']['is_end'] == 0:
             offset = response.meta['offset'] + 20
             # 正则匹配URL
             next_page = re.findall('(.*offset=)\d+', response.url)[0]
-            yield scrapy.Request(next_page + str(offset), callback = self.parse_relation, meta = {'item': response.meta['item'], 'offset': offset, 'relation_type': response.meta['relation_type']})
+            yield Request(next_page + str(offset), callback = self.parse_relation, meta = {'item': response.meta['item'], 'offset': offset, 'relation_type': response.meta['relation_type']})
 
     def parse_answer(self, response):
         json_result = str(response.body, encoding='utf8').replace('false', '0').replace('true', '1')
@@ -181,7 +181,7 @@ class ZhihuspiderSpider(RedisSpider):
         if dict_result['paging']['is_end'] == 0:
             offset = response.meta['offset'] + 20
             next_page = re.findall('(.*offset=)\d+', response.url)[0]
-            yield scrapy.Request(next_page + str(offset), callback = self.parse_answer, meta = {'answer_user_id': response.meta['answer_user_id'], 'offset': offset})
+            yield Request(next_page + str(offset), callback = self.parse_answer, meta = {'answer_user_id': response.meta['answer_user_id'], 'offset': offset})
 
     def parse_question(self, response):
         # 用xpath提取提问页面信息
@@ -207,7 +207,7 @@ class ZhihuspiderSpider(RedisSpider):
         if next_page:
             response.meta['page'] += 1
             next_url = re.findall('(.*page=)\d+', response.url)[0] + str(response.meta['page'])
-            yield scrapy.Request(next_url, callback = self.parse_question, meta = {'ask_user_id': response.meta['ask_user_id'], 'page': response.meta['page']})
+            yield Request(next_url, callback = self.parse_question, meta = {'ask_user_id': response.meta['ask_user_id'], 'page': response.meta['page']})
 
     def parse_article(self, response):
         json_result = str(response.body, encoding = 'utf8').replace('false', '0').replace('true', '1')
@@ -238,5 +238,5 @@ class ZhihuspiderSpider(RedisSpider):
         if dict_result['paging']['is_end'] == 0:
             offset = response.meta['offset'] + 20
             next_page = re.findall('(.*offset=)\d+', response.url)[0]
-            yield scrapy.Request(next_page + str(offset), callback = self.parse_article, meta = {'author_id': response.meta['author_id'], 'offset': offset})
+            yield Request(next_page + str(offset), callback = self.parse_article, meta = {'author_id': response.meta['author_id'], 'offset': offset})
 
